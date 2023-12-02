@@ -6,6 +6,7 @@ import { PersonIcon, PlusIcon } from '@radix-ui/react-icons'
 
 
 export default function Home() {
+
   return (
     <div className='flex-1 flex-col mb-10'>
 

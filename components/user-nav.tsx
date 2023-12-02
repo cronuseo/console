@@ -15,6 +15,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
+import { signOut } from "next-auth/react"
   
   
 const UserNav = () => {
@@ -44,7 +45,7 @@ const UserNav = () => {
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={()=>signOut({callbackUrl : '/signin'})}>
             Log out
           </DropdownMenuItem>
         </DropdownMenuContent>
