@@ -35,6 +35,8 @@ export const options = {
         );
 
         if (response.status === 200) {
+          const data = await response.json();
+          account.organization_id = data.organization_id;
           return true;
         } else {
           // Handle errors
@@ -49,10 +51,16 @@ export const options = {
       if (profile) {
         token.id = profile.sub;
       }
+      if (account) {
+        token.id_token = account.id_token
+        token.organization_id = account.organization_id
+      }
       return token;
     },
     async session({ session, token, user }: any) {
       session.user.id = token.id;
+      session.id_token = token.id_token
+      session.user.organization_id = token.organization_id
       return session;
     },
   },
