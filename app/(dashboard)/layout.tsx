@@ -8,6 +8,8 @@ import { Sidebar } from '@/components/sidebar'
 import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { options } from '../api/auth/[...nextauth]/options'
+import Provider from './(context)/client-provider'
+import { Toaster } from '@/components/ui/toaster'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -35,13 +37,16 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className='flex flex-col h-screen'>
-            <MainNav />
-            <div className='flex flex-1 flex-row overflow-hidden'>
-              <Sidebar/>
-              {children}
+          <Provider session={session}>
+            <div className='flex flex-col h-screen'>
+              <MainNav />
+              <div className='flex flex-1 flex-row overflow-hidden'>
+                <Sidebar />
+                {children}
+              </div>
             </div>
-          </div>
+            <Toaster />
+          </Provider>
         </ThemeProvider>
       </body>
     </html>

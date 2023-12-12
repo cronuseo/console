@@ -12,8 +12,7 @@ import { user_columns } from './user_columns'
 
 const fetchUsers = async () => {
   const session = await getServerSession(options);
-  console.log(session.user)
-  const response = await fetch('http://localhost:8080/api/v1/o/6564c6682b330df77eb10b07/users', {
+  const response = await fetch(`${process.env.CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/users`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',

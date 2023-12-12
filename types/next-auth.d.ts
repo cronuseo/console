@@ -5,5 +5,7 @@ declare module "next-auth" {
     user: {
         organization_id: string;
     } & DefaultSession["user"];
+    id_token: string
   }
+
 }
