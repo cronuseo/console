@@ -255,7 +255,7 @@ export function AddUserForm({ session }: any) {
                 <MultiSelect items={roles.map((role: any) => ({
                   value: role.id,
                   label: role.identifier
-                }))} onSelect={handleSelectRoles} />
+                }))} onSelect={handleSelectRoles} selectedItems={[]}/>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -271,7 +271,7 @@ export function AddUserForm({ session }: any) {
                 <MultiSelect items={groups.map((role: any) => ({
                   value: role.id,
                   label: role.identifier
-                }))} onSelect={handleSelectGroups} />
+                }))} onSelect={handleSelectGroups} selectedItems={[]}/>
               </FormControl>
               <FormMessage />
             </FormItem>

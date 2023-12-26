@@ -18,13 +18,14 @@ export type MultiSelectItem = {
 
 interface MultiSelectProps {
   items: MultiSelectItem[];
+  selectedItems: MultiSelectItem[]; 
   onSelect: (selectedItems: MultiSelectItem[]) => void; // Callback to return selected items
 }
 
-export function MultiSelect({ items, onSelect }: MultiSelectProps) {
+export function MultiSelect({ items, selectedItems, onSelect }: MultiSelectProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = React.useState(false);
-  const [selected, setSelected] = React.useState<MultiSelectItem[]>([]);
+  const [selected, setSelected] = React.useState<MultiSelectItem[]>(selectedItems);
   const [inputValue, setInputValue] = React.useState("");
 
   React.useEffect(() => {
