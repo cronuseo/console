@@ -21,17 +21,17 @@ interface DataTableToolbarProps<TData> {
   table: Table<TData>
 }
 
-const addUsers = async (identifier: string, username: string, roles: string[], groups: string[], session: any) => {
+const addRoles = async (identifier: string, display_name: string, users: string[], groups: string[], session: any) => {
 
   const body = {
     identifier: identifier,
-    username: username,
-    roles: roles,
+    display_name: display_name,
+    users: users,
     groups: groups
   };
 
   const response = await fetch(
-    `http://localhost:8080/api/v1/o/${session!.user.organization_id}/users`,
+    `http://localhost:8080/api/v1/o/${session!.user.organization_id}/roles`,
     {
       method: "POST",
       headers: {
@@ -45,9 +45,9 @@ const addUsers = async (identifier: string, username: string, roles: string[], g
 
   if (!response.ok) {
     if (response.status === 409) {
-      throw new Error(`User already exists`);
+      throw new Error(`Role already exists`);
     }
-    throw new Error('Error while adding user');
+    throw new Error('Error while adding role');
   }
 
 
@@ -55,9 +55,9 @@ const addUsers = async (identifier: string, username: string, roles: string[], g
   return data;
 };
 
-const fetchRoles = async (session: any) => {
+const fetchUsers = async (session: any) => {
 
-  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/roles`, {
+  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/users`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
@@ -91,7 +91,7 @@ const fetchGroups = async (session: any) => {
   return data;
 };
 
-export function UserTableToolbar<TData>({
+export function RoleTableToolbar<TData>({
   table,
 }: DataTableToolbarProps<TData>) {
   const { data: session } = useSession()
@@ -101,9 +101,9 @@ export function UserTableToolbar<TData>({
       <div className="flex flex-1 items-center space-x-2">
         <Input
           placeholder="Search"
-          value={(table.getColumn("username")?.getFilterValue() as string) ?? ""}
+          value={(table.getColumn("display_name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("username")?.setFilterValue(event.target.value)
+            table.getColumn("display_name")?.setFilterValue(event.target.value)
           }
           className="h-8 w-[150px] lg:w-[250px]"
         />
@@ -122,17 +122,17 @@ export function UserTableToolbar<TData>({
         <Dialog>
           <DialogTrigger asChild>
             <Button size="sm" className="relative" variant="outline">
-              Add User
+              Add Role
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add User</DialogTitle>
+              <DialogTitle>Add Role</DialogTitle>
               <DialogDescription>
-                Follow the steps to add a new user.
+                Follow the steps to add a new role.
               </DialogDescription>
             </DialogHeader>
-            <AddUserForm session={session} />
+            <AddRoleForm session={session} />
           </DialogContent>
         </Dialog>
       </div>
@@ -141,27 +141,27 @@ export function UserTableToolbar<TData>({
 }
 
 const formSchema = z.object({
-  identifier: z.string().min(6, {
-    message: "Identifier must be at least 6 characters.",
+  identifier: z.string().min(3, {
+    message: "Identifier must be at least 3 characters.",
   }),
-  username: z.string().min(6, {
-    message: "Username must be at least 6 characters.",
+  display_name: z.string().min(3, {
+    message: "Display name must be at least 3 characters.",
   }),
   roles: z.string().array().optional()
 })
 
-export function AddUserForm({ session }: any) {
+export function AddRoleForm({ session }: any) {
 
   const router = useRouter()
-  const [roles, setRoles] = useState([])
+  const [users, setUsers] = useState([])
   const [groups, setGroups] = useState([])
   useEffect(() => {
-    const loadRoles = async () => {
+    const loadUsers = async () => {
       try {
-        const fetchedRoles = await fetchRoles(session);
-        setRoles(fetchedRoles);
+        const fetchedUsers = await fetchUsers(session);
+        setUsers(fetchedUsers);
       } catch (error) {
-        console.error('Failed to fetch roles:', error);
+        console.error('Failed to fetch users:', error);
         // Handle the error as required
       }
     };
@@ -170,21 +170,21 @@ export function AddUserForm({ session }: any) {
         const fetchedGroups = await fetchGroups(session);
         setGroups(fetchedGroups);
       } catch (error) {
-        console.error('Failed to fetch roles:', error);
+        console.error('Failed to fetch group:', error);
         // Handle the error as required
       }
     };
 
     if (session) {
-      loadRoles();
+      loadUsers();
       loadGroups();
     }
   }, [session]);
 
-  const [selectedRoles, setSelectedRoles] = useState<MultiSelectItem[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<MultiSelectItem[]>([]);
 
-  const handleSelectRoles = (items: MultiSelectItem[]) => {
-    setSelectedRoles(items);
+  const handleSelectUsers = (items: MultiSelectItem[]) => {
+    setSelectedUsers(items);
   };
 
   const [selectedGroups, setSelectedGroups] = useState<MultiSelectItem[]>([]);
@@ -197,23 +197,23 @@ export function AddUserForm({ session }: any) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: "",
-      identifier: ""
+      identifier: "",
+      display_name: ""
     },
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await addUsers(values.identifier, values.username, selectedRoles.map((role) => role.value ), selectedGroups.map((group) => group.value ), session)
+      await addRoles(values.identifier, values.display_name, selectedUsers.map((user) => user.value ), selectedGroups.map((group) => group.value ), session)
       toast({
-        title: "User Added Successfully",
-        description: 'The user has been added successfully.',
+        title: "Role Added Successfully",
+        description: 'The role has been added successfully.',
       })
       router.refresh()
     } catch (error) {
       toast({
-        title: "User Addition Failed",
-        description: error instanceof Error ? error.message : 'Error while adding the user',
+        title: "Role Addition Failed",
+        description: error instanceof Error ? error.message : 'Error while adding the role',
       })
     }
 
@@ -237,28 +237,28 @@ export function AddUserForm({ session }: any) {
         />
         <FormField
           control={form.control}
-          name="username"
+          name="display_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Username</FormLabel>
+              <FormLabel>Display Name</FormLabel>
               <FormControl>
-                <Input placeholder="username" {...field} />
+                <Input placeholder="display_name" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        {roles.length > 0 ? <FormField
+        {users.length > 0 ? <FormField
           control={form.control}
           name="roles"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Roles</FormLabel>
+              <FormLabel>Users</FormLabel>
               <FormControl>
-                <MultiSelect items={roles.map((role: any) => ({
-                  value: role.id,
-                  label: role.identifier
-                }))} onSelect={handleSelectRoles} selectedItems={[]}/>
+                <MultiSelect items={users.map((user: any) => ({
+                  value: user.id,
+                  label: user.identifier
+                }))} onSelect={handleSelectUsers} selectedItems={[]}/>
               </FormControl>
               <FormMessage />
             </FormItem>

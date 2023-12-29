@@ -39,10 +39,12 @@ export function Sidebar() {
                         <PersonIcon width="18" height="18" style={{ marginRight: 8 }} />
                         Groups
                     </Button>
+                    <Link href="/roles">
                     <Button variant={"/roles" === path ? "secondary" : "ghost"}className="w-full justify-start">
                         <PersonIcon width="18" height="18" style={{ marginRight: 8 }} />
                         Roles
                     </Button>
+                    </Link>
                 </div>
             </div>
         </div>

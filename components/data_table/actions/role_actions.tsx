@@ -29,9 +29,9 @@ interface DataTableRowActionsProps<TData> {
 }
 
 
-const deleteUser = async (id: string, session: any) => {
+const deleteRole = async (id: string, session: any) => {
 
-  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/users/${id}`, {
+  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/roles/${id}`, {
     method: 'DELETE',
     headers: {
       'Accept': 'application/json',
@@ -44,9 +44,9 @@ const deleteUser = async (id: string, session: any) => {
   }
 };
 
-const getUser = async (id: string, session: any) => {
+const getRole = async (id: string, session: any) => {
 
-  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/users/${id}`, {
+  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/roles/${id}`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
@@ -62,9 +62,9 @@ const getUser = async (id: string, session: any) => {
   return data;
 };
 
-const fetchRoles = async (session: any) => {
+const fetchUsers = async (session: any) => {
 
-  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/roles`, {
+  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/users`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
@@ -98,34 +98,34 @@ const fetchGroups = async (session: any) => {
   return data;
 };
 
-export function UserActions<TData>({
+export function RoleActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
   const { data: session } = useSession()
   const { toast } = useToast()
   const router = useRouter()
-  const [user, setUser] = useState(null)
+  const [role, setRole] = useState(null)
   const handleDelete = async () => {
     try {
-      await deleteUser((row.original as any).id, session)
+      await deleteRole((row.original as any).id, session)
       toast({
-        title: "User Deleted Successfully",
-        description: 'The user has been deleted successfully.',
+        title: "Role Deleted Successfully",
+        description: 'The role has been deleted successfully.',
       })
       router.refresh()
     } catch (error) {
       toast({
-        title: "User Deletion Failed",
-        description: error instanceof Error ? error.message : 'Error while deleting the user',
+        title: "Role Deletion Failed",
+        description: error instanceof Error ? error.message : 'Error while deleting the role',
       })
     }
   }
 
   useEffect(() => {
-    const loadUser = async () => {
+    const loadRole = async () => {
       try {
-        const user = await getUser((row.original as any).id, session)
-        setUser(user);
+        const role = await getRole((row.original as any).id, session)
+        setRole(role);
       } catch (error) {
         console.error('Failed to fetch user:', error);
         // Handle the error as required
@@ -133,7 +133,7 @@ export function UserActions<TData>({
     };
 
     if (session) {
-      loadUser();
+      loadRole();
     }
   }, [session])
 
@@ -156,12 +156,12 @@ export function UserActions<TData>({
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Edit User</DialogTitle>
+                <DialogTitle>Edit Role</DialogTitle>
                 <DialogDescription>
-                  Follow the steps to edit the user.
+                  Follow the steps to edit the role.
                 </DialogDescription>
               </DialogHeader>
-              <EditUserForm session={session} user={user} />
+              <EditRoleForm session={session} role={role} />
             </DialogContent>
           </Dialog>
         </DropdownMenuItem>
@@ -174,7 +174,7 @@ export function UserActions<TData>({
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete the user.
+                  This action cannot be undone. This will permanently delete the role.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -190,11 +190,11 @@ export function UserActions<TData>({
 }
 
 const formSchema = z.object({
-  identifier: z.string().min(6, {
-    message: "Identifier must be at least 6 characters.",
+  identifier: z.string().min(3, {
+    message: "Identifier must be at least 3 characters.",
   }),
-  username: z.string().min(6, {
-    message: "Username must be at least 6 characters.",
+  display_name: z.string().min(3, {
+    message: "Display name must be at least 3 characters.",
   }),
   roles: z.string().array().optional()
 })
@@ -206,17 +206,17 @@ function identifyRoleChanges(givenRoles: string[], selectedRoles: string[]): [st
   return [addedRoles, removedRoles];
 }
 
-const editUser = async (id: string, added_roles: string[], removed_roles: string[], added_groups: string[], removed_groups: string[], session: any) => {
+const editRole = async (id: string, added_users: string[], removed_users: string[], added_groups: string[], removed_groups: string[], session: any) => {
 
   const body = {
-    added_roles: added_roles,
-    removed_roles: removed_roles,
+    added_users: added_users,
+    removed_users: removed_users,
     added_groups: added_groups,
     removed_groups: removed_groups
   };
 
   const response = await fetch(
-    `http://localhost:8080/api/v1/o/${session!.user.organization_id}/users/${id}`,
+    `http://localhost:8080/api/v1/o/${session!.user.organization_id}/roles/${id}`,
     {
       method: "PATCH",
       headers: {
@@ -230,9 +230,9 @@ const editUser = async (id: string, added_roles: string[], removed_roles: string
 
   if (!response.ok) {
     if (response.status === 401) {
-      throw new Error(`User not exists`);
+      throw new Error(`Role not exists`);
     }
-    throw new Error('Error while updating user');
+    throw new Error('Error while updating role');
   }
 
 
@@ -240,18 +240,18 @@ const editUser = async (id: string, added_roles: string[], removed_roles: string
   return data;
 };
 
-export function EditUserForm({ session, user }: any) {
+export function EditRoleForm({ session, role }: any) {
 
   const router = useRouter()
-  const [roles, setRoles] = useState([])
+  const [users, setUsers] = useState([])
   const [groups, setGroups] = useState([])
   useEffect(() => {
-    const loadRoles = async () => {
+    const loadUsers = async () => {
       try {
-        const fetchedRoles = await fetchRoles(session);
-        setRoles(fetchedRoles);
+        const fetchedUsers = await fetchUsers(session);
+        setUsers(fetchedUsers);
       } catch (error) {
-        console.error('Failed to fetch roles:', error);
+        console.error('Failed to fetch users:', error);
         // Handle the error as required
       }
     };
@@ -260,21 +260,21 @@ export function EditUserForm({ session, user }: any) {
         const fetchedGroups = await fetchGroups(session);
         setGroups(fetchedGroups);
       } catch (error) {
-        console.error('Failed to fetch roles:', error);
+        console.error('Failed to fetch users:', error);
         // Handle the error as required
       }
     };
 
     if (session) {
-      loadRoles();
+      loadUsers();
       loadGroups();
     }
   }, [session]);
 
-  const [selectedRoles, setSelectedRoles] = useState<MultiSelectItem[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<MultiSelectItem[]>([]);
 
-  const handleSelectRoles = (items: MultiSelectItem[]) => {
-    setSelectedRoles(items);
+  const handleSelectUsers = (items: MultiSelectItem[]) => {
+    setSelectedUsers(items);
   };
 
   const [selectedGroups, setSelectedGroups] = useState<MultiSelectItem[]>([]);
@@ -287,25 +287,25 @@ export function EditUserForm({ session, user }: any) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: user.username,
-      identifier: user.identifier
+      display_name: role.display_name,
+      identifier: role.identifier
     },
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const [addedRoles, removedRoles] = identifyRoleChanges(user.roles ? user.roles.map((role: any) => role.id) : [], selectedRoles.map((role) => role.value));
-      const [addedGroups, removedGroups] = identifyRoleChanges(user.groups ? user.groups.map((group: any) => group.id) : [], selectedGroups.map((group) => group.value));
-      await editUser(user.id, addedRoles, removedRoles, addedGroups, removedGroups, session)
+      const [addedUsers, removedUsers] = identifyRoleChanges(role.users ? role.users.map((user: any) => user.id) : [], selectedUsers.map((user) => user.value));
+      const [addedGroups, removedGroups] = identifyRoleChanges(role.groups ? role.groups.map((group: any) => group.id) : [], selectedGroups.map((group) => group.value));
+      await editRole(role.id, addedUsers, removedUsers, addedGroups, removedGroups, session)
       toast({
-        title: "User Updated Successfully",
-        description: 'The user has been updated successfully.',
+        title: "Role Updated Successfully",
+        description: 'The role has been updated successfully.',
       })
       router.refresh()
     } catch (error) {
       toast({
-        title: "User Update Failed",
-        description: error instanceof Error ? error.message : 'Error while updating the user',
+        title: "Role Update Failed",
+        description: error instanceof Error ? error.message : 'Error while updating the role',
       })
     }
 
@@ -329,37 +329,37 @@ export function EditUserForm({ session, user }: any) {
         />
         <FormField
           control={form.control}
-          name="username"
+          name="display_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Username</FormLabel>
+              <FormLabel>Display Name</FormLabel>
               <FormControl>
-                <Input placeholder="username" {...field} disabled />
+                <Input placeholder="display_name" {...field} disabled />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        {user.roles && user.roles.length > 0 ? <FormField
+        {role.users && role.users.length > 0 ? <FormField
           control={form.control}
           name="roles"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Roles</FormLabel>
+              <FormLabel>Users</FormLabel>
               <FormControl>
-                <MultiSelect items={roles.map((role: any) => ({
+                <MultiSelect items={users.map((role: any) => ({
                   value: role.id,
                   label: role.identifier
-                }))} onSelect={handleSelectRoles} selectedItems={user.roles.map((role: any) => ({
-                  value: role.id,
-                  label: role.identifier
+                }))} onSelect={handleSelectUsers} selectedItems={role.users.map((user: any) => ({
+                  value: user.id,
+                  label: user.identifier
                 }))} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         /> : <div></div>}
-        {user.groups && user.groups.length > 0 ? <FormField
+        {role.groups && role.groups.length > 0 ? <FormField
           control={form.control}
           name="roles"
           render={({ field }) => (
@@ -369,7 +369,7 @@ export function EditUserForm({ session, user }: any) {
                 <MultiSelect items={groups.map((role: any) => ({
                   value: role.id,
                   label: role.identifier
-                }))} onSelect={handleSelectGroups} selectedItems={user.groups.map((role: any) => ({
+                }))} onSelect={handleSelectGroups} selectedItems={role.groups.map((role: any) => ({
                   value: role.id,
                   label: role.identifier
                 }))} />

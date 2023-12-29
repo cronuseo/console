@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { usePathname } from "next/navigation"
 import { UserTableToolbar } from "./toolbars/user_toolbar"
+import { RoleTableToolbar } from "./toolbars/role_toolbar"
 
 
 interface DataTableToolbarProps<TData> {
@@ -23,6 +24,10 @@ export function DataTableToolbar<TData>({
     case '/users':
       return (
         <UserTableToolbar table={table}/>
+      )
+    case '/roles':
+      return (
+        <RoleTableToolbar table={table}/>
       )
     default :
         return (
