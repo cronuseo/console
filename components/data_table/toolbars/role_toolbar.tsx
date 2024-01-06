@@ -16,6 +16,14 @@ import { useToast } from "@/components/ui/use-toast"
 import { MultiSelect, MultiSelectItem } from "@/components/ui/multi-select"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { loadavg } from "os"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import React from "react"
+import { Check, ChevronsUpDown } from "lucide-react"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
+import { cn } from "@/lib/utils"
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
@@ -91,6 +99,24 @@ const fetchGroups = async (session: any) => {
   return data;
 };
 
+const fetchResources = async (session: any) => {
+
+  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/resources`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${session.id_token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error('Network response was not ok');
+  }
+
+  const data = await response.json();
+  return data;
+};
+
 export function RoleTableToolbar<TData>({
   table,
 }: DataTableToolbarProps<TData>) {
@@ -119,22 +145,22 @@ export function RoleTableToolbar<TData>({
         )}
       </div>
       <div className=''>
-        <Dialog>
-          <DialogTrigger asChild>
+        <Sheet>
+          <SheetTrigger asChild>
             <Button size="sm" className="relative" variant="outline">
               Add Role
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Role</DialogTitle>
-              <DialogDescription>
+          </SheetTrigger>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Add Role</SheetTitle>
+              <SheetDescription>
                 Follow the steps to add a new role.
-              </DialogDescription>
-            </DialogHeader>
+              </SheetDescription>
+            </SheetHeader>
             <AddRoleForm session={session} />
-          </DialogContent>
-        </Dialog>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   )
@@ -155,6 +181,7 @@ export function AddRoleForm({ session }: any) {
   const router = useRouter()
   const [users, setUsers] = useState([])
   const [groups, setGroups] = useState([])
+  const [resources, setResources] = useState([])
   useEffect(() => {
     const loadUsers = async () => {
       try {
@@ -174,10 +201,20 @@ export function AddRoleForm({ session }: any) {
         // Handle the error as required
       }
     };
+    const loadActions = async () => {
+      try {
+        const fetchedResources = await fetchResources(session);
+        setResources(fetchedResources);
+      } catch (error) {
+        console.error('Failed to fetch resources:', error);
+        // Handle the error as required
+      }
+    };
 
     if (session) {
       loadUsers();
       loadGroups();
+      loadActions();
     }
   }, [session]);
 
@@ -204,7 +241,7 @@ export function AddRoleForm({ session }: any) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await addRoles(values.identifier, values.display_name, selectedUsers.map((user) => user.value ), selectedGroups.map((group) => group.value ), session)
+      await addRoles(values.identifier, values.display_name, selectedUsers.map((user) => user.value), selectedGroups.map((group) => group.value), session)
       toast({
         title: "Role Added Successfully",
         description: 'The role has been added successfully.',
@@ -219,68 +256,153 @@ export function AddRoleForm({ session }: any) {
 
   }
 
+  const [open, setOpen] = React.useState(false)
+  const [resource, setResource] = React.useState("")
+  const [selectedResources, setSelectedResources] = React.useState<string[]>([])
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="identifier"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Identifier</FormLabel>
-              <FormControl>
-                <Input placeholder="identifier" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="display_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Display Name</FormLabel>
-              <FormControl>
-                <Input placeholder="display_name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {users.length > 0 ? <FormField
-          control={form.control}
-          name="roles"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Users</FormLabel>
-              <FormControl>
-                <MultiSelect items={users.map((user: any) => ({
-                  value: user.id,
-                  label: user.identifier
-                }))} onSelect={handleSelectUsers} selectedItems={[]}/>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        /> : <div></div>}
-        {groups.length > 0 ? <FormField
-          control={form.control}
-          name="roles"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Groups</FormLabel>
-              <FormControl>
-                <MultiSelect items={groups.map((role: any) => ({
-                  value: role.id,
-                  label: role.identifier
-                }))} onSelect={handleSelectGroups} selectedItems={[]}/>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        /> : <div></div>}
-        <Button type="submit">Submit</Button>
+        <Tabs defaultValue="account" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="permissions">Permissions</TabsTrigger>
+          </TabsList>
+          <TabsContent value="details">
+            <FormField
+              control={form.control}
+              name="identifier"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Identifier</FormLabel>
+                  <FormControl>
+                    <Input placeholder="identifier" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="display_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Display Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="display_name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {users.length > 0 ? <FormField
+              control={form.control}
+              name="roles"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Users</FormLabel>
+                  <FormControl>
+                    <MultiSelect items={users.map((user: any) => ({
+                      value: user.id,
+                      label: user.identifier
+                    }))} onSelect={handleSelectUsers} selectedItems={[]} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            /> : <div></div>}
+            {groups.length > 0 ? <FormField
+              control={form.control}
+              name="roles"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Groups</FormLabel>
+                  <FormControl>
+                    <MultiSelect items={groups.map((role: any) => ({
+                      value: role.id,
+                      label: role.identifier
+                    }))} onSelect={handleSelectGroups} selectedItems={[]} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            /> : <div></div>}
+          </TabsContent>
+          <TabsContent value="permissions">
+
+            {resources.length > 0 ?
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="w-full justify-between"
+                  >
+                    {
+                      resource
+                        ? (resources.find((resourceItem: any) => resourceItem.identifier === resource) as any)?.identifier
+                        : "Select resource"
+                    }
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search framework..." />
+                    <CommandEmpty>No framework found.</CommandEmpty>
+                    <CommandGroup>
+                      {resources.map((resource: any) => (
+                        <CommandItem
+                          key={resource.identifier}
+                          value={resource.identifier}
+                          onSelect={
+                            (currentResource) => {
+                              setResource(currentResource === resource ? "" : currentResource)
+                              if (!selectedResources.includes(currentResource)) {
+                                setSelectedResources([...selectedResources, currentResource]);
+                              }
+                              setOpen(false)
+                            }
+
+                          }
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              resource === resource.value ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {resource.identifier}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              : <div></div>}
+            {selectedResources.length > 0 ?
+              selectedResources.map((resource) => (
+                <FormField
+                  control={form.control}
+                  name="roles"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{resource}</FormLabel>
+                      <FormControl>
+                        <MultiSelect items={groups.map((role: any) => ({
+                          value: role.id,
+                          label: role.identifier
+                        }))} onSelect={handleSelectGroups} selectedItems={[]} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )) : <div></div>}
+          </TabsContent>
+        </Tabs>
+        <Button type="submit">Create</Button>
       </form>
     </Form>
   )

@@ -2,12 +2,8 @@
 
 import { DataTableColumnHeader } from "@/components/data_table/data-table-column-header"
 import { DataTableRowActions } from "@/components/data_table/data-table-row-actions"
+import { User } from "@/types"
 import { ColumnDef } from "@tanstack/react-table"
-
-export type User = {
-    id: string
-    identifier: string
-  }
 
 export const user_columns: ColumnDef<User>[] = [
   

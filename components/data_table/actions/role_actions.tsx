@@ -2,34 +2,29 @@
 
 import { DotsHorizontalIcon } from "@radix-ui/react-icons"
 import { Row } from "@tanstack/react-table"
-
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { usePathname, useRouter } from "next/navigation"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu"
+import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useToast } from "@/components/ui/use-toast"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { AddUserForm } from "../toolbars/user_toolbar"
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, Form } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { MultiSelectItem, MultiSelect } from "@/components/ui/multi-select"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
-import { string, z } from "zod"
+import { z } from "zod"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Session } from "next-auth"
+import { GroupEntity, ResourceEntity, Role, UserEntity } from "@/types"
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>
 }
 
 
-const deleteRole = async (id: string, session: any) => {
+const deleteRole = async (id: string, session: Session) => {
 
   const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/roles/${id}`, {
     method: 'DELETE',
@@ -44,7 +39,7 @@ const deleteRole = async (id: string, session: any) => {
   }
 };
 
-const getRole = async (id: string, session: any) => {
+const fetchRole = async (id: string, session: Session) : Promise<Role> => {
 
   const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/roles/${id}`, {
     method: 'GET',
@@ -62,7 +57,7 @@ const getRole = async (id: string, session: any) => {
   return data;
 };
 
-const fetchUsers = async (session: any) => {
+const fetchUsers = async (session: Session) : Promise<UserEntity[]> => {
 
   const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/users`, {
     method: 'GET',
@@ -80,7 +75,25 @@ const fetchUsers = async (session: any) => {
   return data;
 };
 
-const fetchGroups = async (session: any) => {
+const fetchResources = async (session: Session) : Promise<ResourceEntity[]> => {
+
+    const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/resources`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${session.id_token}`
+      }
+    });
+  
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+  
+    const data = await response.json();
+    return data;
+  };
+
+const fetchGroups = async (session: Session) : Promise<GroupEntity[]> => {
 
   const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/groups`, {
     method: 'GET',
@@ -104,10 +117,10 @@ export function RoleActions<TData>({
   const { data: session } = useSession()
   const { toast } = useToast()
   const router = useRouter()
-  const [role, setRole] = useState(null)
+  const [role, setRole] = useState<Role>()
   const handleDelete = async () => {
     try {
-      await deleteRole((row.original as any).id, session)
+      await deleteRole((row.original as any).id, session!)
       toast({
         title: "Role Deleted Successfully",
         description: 'The role has been deleted successfully.',
@@ -124,11 +137,10 @@ export function RoleActions<TData>({
   useEffect(() => {
     const loadRole = async () => {
       try {
-        const role = await getRole((row.original as any).id, session)
+        const role = await fetchRole((row.original as any).id, session!)
         setRole(role);
       } catch (error) {
         console.error('Failed to fetch user:', error);
-        // Handle the error as required
       }
     };
 
@@ -150,20 +162,20 @@ export function RoleActions<TData>({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-          <Dialog>
-            <DialogTrigger>
+          <Sheet>
+            <SheetTrigger>
               <button>Edit</button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Edit Role</DialogTitle>
-                <DialogDescription>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Edit Role</SheetTitle>
+                <SheetDescription>
                   Follow the steps to edit the role.
-                </DialogDescription>
-              </DialogHeader>
-              <EditRoleForm session={session} role={role} />
-            </DialogContent>
-          </Dialog>
+                </SheetDescription>
+              </SheetHeader>
+              <EditRoleForm session={session!} role={role!} />
+            </SheetContent>
+          </Sheet>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
           <AlertDialog>
@@ -240,11 +252,16 @@ const editRole = async (id: string, added_users: string[], removed_users: string
   return data;
 };
 
-export function EditRoleForm({ session, role }: any) {
+interface EditRoleFormProps {
+  session:Session;
+  role: Role
+}
+
+export function EditRoleForm({ session, role }: EditRoleFormProps) {
 
   const router = useRouter()
-  const [users, setUsers] = useState([])
-  const [groups, setGroups] = useState([])
+  const [users, setUsers] = useState<UserEntity[]>([])
+  const [groups, setGroups] = useState<GroupEntity[]>([])
   useEffect(() => {
     const loadUsers = async () => {
       try {
@@ -252,7 +269,6 @@ export function EditRoleForm({ session, role }: any) {
         setUsers(fetchedUsers);
       } catch (error) {
         console.error('Failed to fetch users:', error);
-        // Handle the error as required
       }
     };
     const loadGroups = async () => {
@@ -261,7 +277,6 @@ export function EditRoleForm({ session, role }: any) {
         setGroups(fetchedGroups);
       } catch (error) {
         console.error('Failed to fetch users:', error);
-        // Handle the error as required
       }
     };
 
@@ -347,10 +362,10 @@ export function EditRoleForm({ session, role }: any) {
             <FormItem>
               <FormLabel>Users</FormLabel>
               <FormControl>
-                <MultiSelect items={users.map((role: any) => ({
-                  value: role.id,
-                  label: role.identifier
-                }))} onSelect={handleSelectUsers} selectedItems={role.users.map((user: any) => ({
+                <MultiSelect items={users.map((user: UserEntity) => ({
+                  value: user.id,
+                  label: user.identifier
+                }))} onSelect={handleSelectUsers} selectedItems={role.users!.map((user: UserEntity) => ({
                   value: user.id,
                   label: user.identifier
                 }))} />
@@ -366,12 +381,12 @@ export function EditRoleForm({ session, role }: any) {
             <FormItem>
               <FormLabel>Groups</FormLabel>
               <FormControl>
-                <MultiSelect items={groups.map((role: any) => ({
-                  value: role.id,
-                  label: role.identifier
-                }))} onSelect={handleSelectGroups} selectedItems={role.groups.map((role: any) => ({
-                  value: role.id,
-                  label: role.identifier
+                <MultiSelect items={groups.map((group: GroupEntity) => ({
+                  value: group.id,
+                  label: group.identifier
+                }))} onSelect={handleSelectGroups} selectedItems={role.groups!.map((group: GroupEntity) => ({
+                  value: group.id,
+                  label: group.identifier
                 }))} />
               </FormControl>
               <FormMessage />

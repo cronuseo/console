@@ -2,34 +2,29 @@
 
 import { DotsHorizontalIcon } from "@radix-ui/react-icons"
 import { Row } from "@tanstack/react-table"
-
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { usePathname, useRouter } from "next/navigation"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu"
+import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useToast } from "@/components/ui/use-toast"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { AddUserForm } from "../toolbars/user_toolbar"
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, Form } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { MultiSelectItem, MultiSelect } from "@/components/ui/multi-select"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
-import { string, z } from "zod"
+import { z } from "zod"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { GroupEntity, RoleEntity, User } from "@/types"
+import { Session } from "next-auth"
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>
 }
 
 
-const deleteUser = async (id: string, session: any) => {
+const deleteUser = async (id: string, session: Session) => {
 
   const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/users/${id}`, {
     method: 'DELETE',
@@ -44,7 +39,7 @@ const deleteUser = async (id: string, session: any) => {
   }
 };
 
-const getUser = async (id: string, session: any) => {
+const fetchUser = async (id: string, session: Session) : Promise<User> => {
 
   const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/users/${id}`, {
     method: 'GET',
@@ -62,7 +57,7 @@ const getUser = async (id: string, session: any) => {
   return data;
 };
 
-const fetchRoles = async (session: any) => {
+const fetchRoles = async (session: Session) : Promise<RoleEntity[]> => {
 
   const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/roles`, {
     method: 'GET',
@@ -80,7 +75,7 @@ const fetchRoles = async (session: any) => {
   return data;
 };
 
-const fetchGroups = async (session: any) => {
+const fetchGroups = async (session: Session) : Promise<GroupEntity[]> => {
 
   const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/groups`, {
     method: 'GET',
@@ -104,10 +99,10 @@ export function UserActions<TData>({
   const { data: session } = useSession()
   const { toast } = useToast()
   const router = useRouter()
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<User>()
   const handleDelete = async () => {
     try {
-      await deleteUser((row.original as any).id, session)
+      await deleteUser((row.original as any).id, session!)
       toast({
         title: "User Deleted Successfully",
         description: 'The user has been deleted successfully.',
@@ -124,11 +119,10 @@ export function UserActions<TData>({
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const user = await getUser((row.original as any).id, session)
+        const user = await fetchUser((row.original as any).id, session!)
         setUser(user);
       } catch (error) {
         console.error('Failed to fetch user:', error);
-        // Handle the error as required
       }
     };
 
@@ -150,20 +144,20 @@ export function UserActions<TData>({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-          <Dialog>
-            <DialogTrigger>
+          <Sheet>
+            <SheetTrigger>
               <button>Edit</button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Edit User</DialogTitle>
-                <DialogDescription>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Edit User</SheetTitle>
+                <SheetDescription>
                   Follow the steps to edit the user.
-                </DialogDescription>
-              </DialogHeader>
-              <EditUserForm session={session} user={user} />
-            </DialogContent>
-          </Dialog>
+                </SheetDescription>
+              </SheetHeader>
+              <EditUserForm session={session!} user={user!} />
+            </SheetContent>
+          </Sheet>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
           <AlertDialog>
@@ -206,7 +200,7 @@ function identifyRoleChanges(givenRoles: string[], selectedRoles: string[]): [st
   return [addedRoles, removedRoles];
 }
 
-const editUser = async (id: string, added_roles: string[], removed_roles: string[], added_groups: string[], removed_groups: string[], session: any) => {
+const editUser = async (id: string, added_roles: string[], removed_roles: string[], added_groups: string[], removed_groups: string[], session: Session) => {
 
   const body = {
     added_roles: added_roles,
@@ -240,11 +234,16 @@ const editUser = async (id: string, added_roles: string[], removed_roles: string
   return data;
 };
 
-export function EditUserForm({ session, user }: any) {
+interface EditUserFormProps {
+  session:Session;
+  user: User
+}
+
+export function EditUserForm({ session, user }: EditUserFormProps) {
 
   const router = useRouter()
-  const [roles, setRoles] = useState([])
-  const [groups, setGroups] = useState([])
+  const [roles, setRoles] = useState<RoleEntity[]>([])
+  const [groups, setGroups] = useState<GroupEntity[]>([])
   useEffect(() => {
     const loadRoles = async () => {
       try {
@@ -252,7 +251,6 @@ export function EditUserForm({ session, user }: any) {
         setRoles(fetchedRoles);
       } catch (error) {
         console.error('Failed to fetch roles:', error);
-        // Handle the error as required
       }
     };
     const loadGroups = async () => {
@@ -261,7 +259,6 @@ export function EditUserForm({ session, user }: any) {
         setGroups(fetchedGroups);
       } catch (error) {
         console.error('Failed to fetch roles:', error);
-        // Handle the error as required
       }
     };
 
@@ -294,8 +291,8 @@ export function EditUserForm({ session, user }: any) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const [addedRoles, removedRoles] = identifyRoleChanges(user.roles ? user.roles.map((role: any) => role.id) : [], selectedRoles.map((role) => role.value));
-      const [addedGroups, removedGroups] = identifyRoleChanges(user.groups ? user.groups.map((group: any) => group.id) : [], selectedGroups.map((group) => group.value));
+      const [addedRoles, removedRoles] = identifyRoleChanges(user.roles ? user.roles.map((role: RoleEntity) => role.id) : [], selectedRoles.map((role) => role.value));
+      const [addedGroups, removedGroups] = identifyRoleChanges(user.groups ? user.groups.map((group: GroupEntity) => group.id) : [], selectedGroups.map((group) => group.value));
       await editUser(user.id, addedRoles, removedRoles, addedGroups, removedGroups, session)
       toast({
         title: "User Updated Successfully",
@@ -350,7 +347,7 @@ export function EditUserForm({ session, user }: any) {
                 <MultiSelect items={roles.map((role: any) => ({
                   value: role.id,
                   label: role.identifier
-                }))} onSelect={handleSelectRoles} selectedItems={user.roles.map((role: any) => ({
+                }))} onSelect={handleSelectRoles} selectedItems={user.roles!.map((role: any) => ({
                   value: role.id,
                   label: role.identifier
                 }))} />
@@ -366,12 +363,12 @@ export function EditUserForm({ session, user }: any) {
             <FormItem>
               <FormLabel>Groups</FormLabel>
               <FormControl>
-                <MultiSelect items={groups.map((role: any) => ({
-                  value: role.id,
-                  label: role.identifier
-                }))} onSelect={handleSelectGroups} selectedItems={user.groups.map((role: any) => ({
-                  value: role.id,
-                  label: role.identifier
+                <MultiSelect items={groups.map((group: GroupEntity) => ({
+                  value: group.id,
+                  label: group.identifier
+                }))} onSelect={handleSelectGroups} selectedItems={user.groups!.map((group: GroupEntity) => ({
+                  value: group.id,
+                  label: group.identifier
                 }))} />
               </FormControl>
               <FormMessage />

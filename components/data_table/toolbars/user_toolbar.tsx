@@ -16,6 +16,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { MultiSelect, MultiSelectItem } from "@/components/ui/multi-select"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
@@ -119,22 +120,19 @@ export function UserTableToolbar<TData>({
         )}
       </div>
       <div className=''>
-        <Dialog>
-          <DialogTrigger asChild>
+        <Sheet>
+          <SheetTrigger asChild>
             <Button size="sm" className="relative" variant="outline">
-              Add User
+              Create User
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add User</DialogTitle>
-              <DialogDescription>
-                Follow the steps to add a new user.
-              </DialogDescription>
-            </DialogHeader>
+          </SheetTrigger>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>New User</SheetTitle>
+            </SheetHeader>
             <AddUserForm session={session} />
-          </DialogContent>
-        </Dialog>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   )
@@ -280,7 +278,7 @@ export function AddUserForm({ session }: any) {
             </FormItem>
           )}
         /> : <div></div>}
-        <Button type="submit">Submit</Button>
+        <Button type="submit">Create</Button>
       </form>
     </Form>
   )

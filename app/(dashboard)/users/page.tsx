@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label'
 import { PersonIcon, PlusIcon } from '@radix-ui/react-icons'
 import { getServerSession } from 'next-auth'
 import { user_columns } from './user_columns'
+import { User } from '@/types'
 
 
 
-const fetchUsers = async () => {
+const fetchUsers = async () : Promise<User[]> => {
   const session = await getServerSession(options);
   const response = await fetch(`${process.env.CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/users`, {
     method: 'GET',
@@ -25,7 +26,7 @@ const fetchUsers = async () => {
   }
 
   const data = await response.json();
-  return data; // This now returns the array of users
+  return data;
 };
 
 export default async function Users() {
