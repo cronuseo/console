@@ -149,24 +149,21 @@ export function RoleTableToolbar<TData>({
           </Button>
         )}
       </div>
-      <div className=''>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button size="sm" className="relative" variant="outline">
-              Add Role
-            </Button>
-          </SheetTrigger>
-          <SheetContent>
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button size="sm" className="relative" variant="outline">
+            Create Role
+          </Button>
+        </SheetTrigger>
+        <SheetContent className="w-[400px] sm:w-[450px] sm:max-w-none">
+          <div className="h-screen">
             <SheetHeader>
-              <SheetTitle>Add Role</SheetTitle>
-              <SheetDescription>
-                Follow the steps to add a new role.
-              </SheetDescription>
+              <SheetTitle>New Role</SheetTitle>
             </SheetHeader>
             <AddRoleForm session={session} />
-          </SheetContent>
-        </Sheet>
-      </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
@@ -247,9 +244,9 @@ export function AddRoleForm({ session }: any) {
       resources.forEach(resource => {
         const actionEntities = selectedResourceActions.get(resource.id);
         actionEntities?.forEach(action => {
-            permissions.push({ resource: resource.identifier, action: action.identifier });
+          permissions.push({ resource: resource.identifier, action: action.identifier });
         });
-    });
+      });
       await addRoles(values.identifier, values.display_name, selectedUsers.map((user) => user.value), selectedGroups.map((group) => group.value), permissions, session)
       toast({
         title: "Role Added Successfully",
@@ -270,157 +267,171 @@ export function AddRoleForm({ session }: any) {
   const [selectedResources, setSelectedResources] = React.useState<ResourceEntity[]>([])
   const [selectedResourceActions, setSelectedResourceActions] = React.useState<Map<string, ActionEntity[]>>(new Map<string, ActionEntity[]>)
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <Tabs defaultValue="account" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="permissions">Permissions</TabsTrigger>
-          </TabsList>
-          <TabsContent value="details">
-            <FormField
-              control={form.control}
-              name="identifier"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Identifier</FormLabel>
-                  <FormControl>
-                    <Input placeholder="identifier" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="display_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Display Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="display_name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {users.length > 0 ? <FormField
-              control={form.control}
-              name="roles"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Users</FormLabel>
-                  <FormControl>
-                    <MultiSelect items={users.map((user: any) => ({
-                      value: user.id,
-                      label: user.identifier
-                    }))} onSelect={handleSelectUsers} selectedItems={[]} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            /> : <div></div>}
-            {groups.length > 0 ? <FormField
-              control={form.control}
-              name="roles"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Groups</FormLabel>
-                  <FormControl>
-                    <MultiSelect items={groups.map((role: any) => ({
-                      value: role.id,
-                      label: role.identifier
-                    }))} onSelect={handleSelectGroups} selectedItems={[]} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            /> : <div></div>}
-          </TabsContent>
-          <TabsContent value="permissions">
+    <div className="h-full pb-20 mt-4">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="h-full">
+          <div className="flex flex-col w-full justify-between h-full">
+            <div className="flex">
+              <Tabs defaultValue="details">
+                <TabsList className="grid grid-cols-4">
+                  <TabsTrigger value="details">Details</TabsTrigger>
+                  <TabsTrigger value="users">Users</TabsTrigger>
+                  <TabsTrigger value="groups">Groups</TabsTrigger>
+                  <TabsTrigger value="permissions">Permissions</TabsTrigger>
+                </TabsList>
+                <TabsContent value="details">
+                  <FormField
+                    control={form.control}
+                    name="identifier"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Identifier</FormLabel>
+                        <FormControl>
+                          <Input placeholder="identifier" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="display_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Display Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="display_name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+                <TabsContent value="users">
+                  {users.length > 0 ? <FormField
+                    control={form.control}
+                    name="roles"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Users</FormLabel>
+                        <FormControl>
+                          <MultiSelect items={users.map((user: any) => ({
+                            value: user.id,
+                            label: user.identifier
+                          }))} onSelect={handleSelectUsers} selectedItems={[]} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  /> : <div></div>}
+                </TabsContent>
+                <TabsContent value="groups">
+                  {groups.length > 0 ? <FormField
+                    control={form.control}
+                    name="roles"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Groups</FormLabel>
+                        <FormControl>
+                          <MultiSelect items={groups.map((role: any) => ({
+                            value: role.id,
+                            label: role.identifier
+                          }))} onSelect={handleSelectGroups} selectedItems={[]} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  /> : <div></div>}
+                </TabsContent>
+                <TabsContent value="permissions">
 
-            {resources.length > 0 ?
-              <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={open}
-                    className="w-full justify-between"
-                  >
-                    {
-                      selectedResource
-                        ? (resources.find((resourceItem: ResourceEntity) => resourceItem.identifier === selectedResource.identifier))?.identifier
-                        : "Select resource"
-                    }
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[200px] p-0">
-                  <Command>
-                    <CommandInput placeholder="Search framework..." />
-                    <CommandEmpty>No framework found.</CommandEmpty>
-                    <CommandGroup>
-                      {resources.map((resource: ResourceEntity) => (
-                        <CommandItem
-                          key={resource.identifier}
-                          value={resource.identifier}
-                          onSelect={
-                            (currentResource) => {
-                              if (!selectedResource || currentResource !== selectedResource.identifier) {
-                                const r = resources.find(r => r.identifier === currentResource);
-                                setSelectedResource(r);
-                              }
-                              setSelectedResources(prevSelectedResources => {
-                                if (prevSelectedResources.some(r => r.identifier === currentResource)) {
-                                  return prevSelectedResources;
-                                } else {
-                                  const newResource = resources.find(r => r.identifier === currentResource);
-                                  return newResource ? [...prevSelectedResources, newResource] : prevSelectedResources;
-                                }
-                              });
-                              setOpen(false);
-
-                            }
-
-                          }
+                  {resources.length > 0 ?
+                    <Popover open={open} onOpenChange={setOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={open}
+                          className="w-full justify-between"
                         >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedResource?.identifier === resource.identifier ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          {resource.identifier}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              : <div></div>}
-            {selectedResources.length > 0 ?
-              selectedResources.map((resource: ResourceEntity) => (
-                <FormField
-                  control={form.control}
-                  name="roles"
-                  key={resource.identifier}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{resource.identifier}</FormLabel>
-                      <FormControl>
-                        <ActionSelector resourceId={resource.id} selectedResourceActions={selectedResourceActions} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )) : <div></div>}
-          </TabsContent>
-        </Tabs>
-        <Button type="submit">Create</Button>
-      </form>
-    </Form>
+                          {
+                            selectedResource
+                              ? (resources.find((resourceItem: ResourceEntity) => resourceItem.identifier === selectedResource.identifier))?.identifier
+                              : "Select resource"
+                          }
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[200px] p-0">
+                        <Command>
+                          <CommandInput placeholder="Search framework..." />
+                          <CommandEmpty>No framework found.</CommandEmpty>
+                          <CommandGroup>
+                            {resources.map((resource: ResourceEntity) => (
+                              <CommandItem
+                                key={resource.identifier}
+                                value={resource.identifier}
+                                onSelect={
+                                  (currentResource) => {
+                                    if (!selectedResource || currentResource !== selectedResource.identifier) {
+                                      const r = resources.find(r => r.identifier === currentResource);
+                                      setSelectedResource(r);
+                                    }
+                                    setSelectedResources(prevSelectedResources => {
+                                      if (prevSelectedResources.some(r => r.identifier === currentResource)) {
+                                        return prevSelectedResources;
+                                      } else {
+                                        const newResource = resources.find(r => r.identifier === currentResource);
+                                        return newResource ? [...prevSelectedResources, newResource] : prevSelectedResources;
+                                      }
+                                    });
+                                    setOpen(false);
+
+                                  }
+
+                                }
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedResource?.identifier === resource.identifier ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {resource.identifier}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    : <div></div>}
+                  {selectedResources.length > 0 ?
+                    selectedResources.map((resource: ResourceEntity) => (
+                      <FormField
+                        control={form.control}
+                        name="roles"
+                        key={resource.identifier}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{resource.identifier}</FormLabel>
+                            <FormControl>
+                              <ActionSelector resourceId={resource.id} selectedResourceActions={selectedResourceActions} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )) : <div></div>}
+                </TabsContent>
+              </Tabs>
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit">Create</Button>
+            </div>
+          </div>
+        </form>
+      </Form>
+    </div>
   )
 }
 
