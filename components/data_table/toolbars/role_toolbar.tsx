@@ -1,13 +1,11 @@
 "use client"
 
-import { Cross2Icon, PlusIcon } from "@radix-ui/react-icons"
+import { Cross2Icon } from "@radix-ui/react-icons"
 import { Table } from "@tanstack/react-table"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Label } from "@/components/ui/label"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import * as z from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -16,7 +14,6 @@ import { useToast } from "@/components/ui/use-toast"
 import { MultiSelect, MultiSelectItem } from "@/components/ui/multi-select"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { loadavg } from "os"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -24,12 +21,20 @@ import React from "react"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
 import { cn } from "@/lib/utils"
+import { Session } from "next-auth"
+import { ActionEntity, GroupEntity, ResourceEntity, UserEntity } from "@/types"
+import ActionSelector from "@/components/action-selector"
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
 }
 
-const addRoles = async (identifier: string, display_name: string, users: string[], groups: string[], session: any) => {
+interface Permission {
+  resource: string;
+  action: string;
+}
+
+const addRoles = async (identifier: string, display_name: string, users: string[], groups: string[], permissions: Permission[], session: Session) => {
 
   const body = {
     identifier: identifier,
@@ -63,7 +68,7 @@ const addRoles = async (identifier: string, display_name: string, users: string[
   return data;
 };
 
-const fetchUsers = async (session: any) => {
+const fetchUsers = async (session: Session): Promise<UserEntity[]> => {
 
   const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/users`, {
     method: 'GET',
@@ -81,7 +86,7 @@ const fetchUsers = async (session: any) => {
   return data;
 };
 
-const fetchGroups = async (session: any) => {
+const fetchGroups = async (session: Session): Promise<GroupEntity[]> => {
 
   const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/groups`, {
     method: 'GET',
@@ -99,7 +104,7 @@ const fetchGroups = async (session: any) => {
   return data;
 };
 
-const fetchResources = async (session: any) => {
+const fetchResources = async (session: Session): Promise<ResourceEntity[]> => {
 
   const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/resources`, {
     method: 'GET',
@@ -179,9 +184,9 @@ const formSchema = z.object({
 export function AddRoleForm({ session }: any) {
 
   const router = useRouter()
-  const [users, setUsers] = useState([])
-  const [groups, setGroups] = useState([])
-  const [resources, setResources] = useState([])
+  const [users, setUsers] = useState<UserEntity[]>([])
+  const [groups, setGroups] = useState<GroupEntity[]>([])
+  const [resources, setResources] = useState<ResourceEntity[]>([])
   useEffect(() => {
     const loadUsers = async () => {
       try {
@@ -189,7 +194,6 @@ export function AddRoleForm({ session }: any) {
         setUsers(fetchedUsers);
       } catch (error) {
         console.error('Failed to fetch users:', error);
-        // Handle the error as required
       }
     };
     const loadGroups = async () => {
@@ -198,7 +202,6 @@ export function AddRoleForm({ session }: any) {
         setGroups(fetchedGroups);
       } catch (error) {
         console.error('Failed to fetch group:', error);
-        // Handle the error as required
       }
     };
     const loadActions = async () => {
@@ -207,7 +210,6 @@ export function AddRoleForm({ session }: any) {
         setResources(fetchedResources);
       } catch (error) {
         console.error('Failed to fetch resources:', error);
-        // Handle the error as required
       }
     };
 
@@ -241,7 +243,14 @@ export function AddRoleForm({ session }: any) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await addRoles(values.identifier, values.display_name, selectedUsers.map((user) => user.value), selectedGroups.map((group) => group.value), session)
+      let permissions: Permission[] = [];
+      resources.forEach(resource => {
+        const actionEntities = selectedResourceActions.get(resource.id);
+        actionEntities?.forEach(action => {
+            permissions.push({ resource: resource.identifier, action: action.identifier });
+        });
+    });
+      await addRoles(values.identifier, values.display_name, selectedUsers.map((user) => user.value), selectedGroups.map((group) => group.value), permissions, session)
       toast({
         title: "Role Added Successfully",
         description: 'The role has been added successfully.',
@@ -257,9 +266,9 @@ export function AddRoleForm({ session }: any) {
   }
 
   const [open, setOpen] = React.useState(false)
-  const [resource, setResource] = React.useState("")
-  const [selectedResources, setSelectedResources] = React.useState<string[]>([])
-
+  const [selectedResource, setSelectedResource] = React.useState<ResourceEntity>()
+  const [selectedResources, setSelectedResources] = React.useState<ResourceEntity[]>([])
+  const [selectedResourceActions, setSelectedResourceActions] = React.useState<Map<string, ActionEntity[]>>(new Map<string, ActionEntity[]>)
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -340,8 +349,8 @@ export function AddRoleForm({ session }: any) {
                     className="w-full justify-between"
                   >
                     {
-                      resource
-                        ? (resources.find((resourceItem: any) => resourceItem.identifier === resource) as any)?.identifier
+                      selectedResource
+                        ? (resources.find((resourceItem: ResourceEntity) => resourceItem.identifier === selectedResource.identifier))?.identifier
                         : "Select resource"
                     }
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -352,17 +361,26 @@ export function AddRoleForm({ session }: any) {
                     <CommandInput placeholder="Search framework..." />
                     <CommandEmpty>No framework found.</CommandEmpty>
                     <CommandGroup>
-                      {resources.map((resource: any) => (
+                      {resources.map((resource: ResourceEntity) => (
                         <CommandItem
                           key={resource.identifier}
                           value={resource.identifier}
                           onSelect={
                             (currentResource) => {
-                              setResource(currentResource === resource ? "" : currentResource)
-                              if (!selectedResources.includes(currentResource)) {
-                                setSelectedResources([...selectedResources, currentResource]);
+                              if (!selectedResource || currentResource !== selectedResource.identifier) {
+                                const r = resources.find(r => r.identifier === currentResource);
+                                setSelectedResource(r);
                               }
-                              setOpen(false)
+                              setSelectedResources(prevSelectedResources => {
+                                if (prevSelectedResources.some(r => r.identifier === currentResource)) {
+                                  return prevSelectedResources;
+                                } else {
+                                  const newResource = resources.find(r => r.identifier === currentResource);
+                                  return newResource ? [...prevSelectedResources, newResource] : prevSelectedResources;
+                                }
+                              });
+                              setOpen(false);
+
                             }
 
                           }
@@ -370,7 +388,7 @@ export function AddRoleForm({ session }: any) {
                           <Check
                             className={cn(
                               "mr-2 h-4 w-4",
-                              resource === resource.value ? "opacity-100" : "opacity-0"
+                              selectedResource?.identifier === resource.identifier ? "opacity-100" : "opacity-0"
                             )}
                           />
                           {resource.identifier}
@@ -382,18 +400,16 @@ export function AddRoleForm({ session }: any) {
               </Popover>
               : <div></div>}
             {selectedResources.length > 0 ?
-              selectedResources.map((resource) => (
+              selectedResources.map((resource: ResourceEntity) => (
                 <FormField
                   control={form.control}
                   name="roles"
+                  key={resource.identifier}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{resource}</FormLabel>
+                      <FormLabel>{resource.identifier}</FormLabel>
                       <FormControl>
-                        <MultiSelect items={groups.map((role: any) => ({
-                          value: role.id,
-                          label: role.identifier
-                        }))} onSelect={handleSelectGroups} selectedItems={[]} />
+                        <ActionSelector resourceId={resource.id} selectedResourceActions={selectedResourceActions} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

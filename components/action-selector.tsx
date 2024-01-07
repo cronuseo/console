@@ -1,15 +1,15 @@
 "use client"
 
 import React, { useEffect, useState } from 'react'
-import { MultiSelect } from './ui/multi-select'
+import { MultiSelect, MultiSelectItem } from './ui/multi-select'
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
 import { useToast } from './ui/use-toast';
-import { Resource } from '@/types';
+import { ActionEntity, Resource } from '@/types';
 import { Session } from 'next-auth';
 
 interface ActionSelectorProps {
-    resourceId:string
+    resourceId:string;
+    selectedResourceActions: Map<string, ActionEntity[]>;
 }
 
 const fetchResource = async (id:string, session: Session) : Promise<Resource> => {
@@ -30,12 +30,27 @@ const fetchResource = async (id:string, session: Session) : Promise<Resource> =>
     return data;
   };
 
-function ActionSelector({ resourceId} : ActionSelectorProps) {
+function ActionSelector({ resourceId, selectedResourceActions } : ActionSelectorProps) {
 
     const { data: session } = useSession()
     const { toast } = useToast()
-    const router = useRouter()
     const [resource, setResorce] = useState<Resource>()
+    const [selectedActions, setSelectedActions] = useState<MultiSelectItem[]>(selectedResourceActions.get(resourceId)?.map(action => ({
+        value: action.id,
+        label: action.identifier
+      })) ?? []);
+
+    useEffect(() => {
+        const actions = selectedActions
+        .map(action => resource?.actions?.find(a => a.id === action.value))
+        .filter(action => action !== undefined) as ActionEntity[];
+        console.log(selectedActions)
+        selectedResourceActions.set(resourceId, actions);
+    }, [selectedActions, resourceId, resource?.actions]);
+
+    const handleSelectActions = (items: MultiSelectItem[]) => {
+        setSelectedActions(items);
+    };
     useEffect(() => {
         const loadResource = async () => {
           try {
@@ -52,10 +67,10 @@ function ActionSelector({ resourceId} : ActionSelectorProps) {
       }, [session])
   return (
     resource?.actions ? 
-    <MultiSelect items={resource?.actions?.map((role: any) => ({
-        value: role.id,
-        label: role.identifier
-      }))} onSelect={()=>{}} selectedItems={[]} />
+    <MultiSelect items={resource?.actions?.map((action: any) => ({
+        value: action.id,
+        label: action.identifier
+      }))} onSelect={handleSelectActions} selectedItems={selectedActions} />
       : <div></div>
   )
 }
