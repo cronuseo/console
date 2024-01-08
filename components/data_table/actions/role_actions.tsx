@@ -224,13 +224,24 @@ function identifyRoleChanges(givenRoles: string[], selectedRoles: string[]): [st
   return [addedRoles, removedRoles];
 }
 
-const editRole = async (id: string, added_users: string[], removed_users: string[], added_groups: string[], removed_groups: string[], session: any) => {
+function identifyPermissionChanges(givenPermissions: PermissionEntity[], selectedPermissions: PermissionEntity[]): [PermissionEntity[], PermissionEntity[]] {
+  const addedPermissions= selectedPermissions.filter(permission => !givenPermissions.some(givenPermission => 
+    givenPermission.resource === permission.resource && givenPermission.action === permission.action));
+  const removedPermissions = givenPermissions.filter(permission => !selectedPermissions.some(selectedPermission => 
+    selectedPermission.resource === permission.resource && selectedPermission.action === permission.action));
+
+  return [addedPermissions, removedPermissions];
+}
+
+const editRole = async (id: string, added_users: string[], removed_users: string[], added_groups: string[], removed_groups: string[], added_permissions: PermissionEntity[], removed_permissions: PermissionEntity[], session: any) => {
 
   const body = {
     added_users: added_users,
     removed_users: removed_users,
     added_groups: added_groups,
-    removed_groups: removed_groups
+    removed_groups: removed_groups,
+    added_permissions: added_permissions,
+    removed_permissions: removed_permissions
   };
 
   const response = await fetch(
@@ -348,7 +359,20 @@ export function EditRoleForm({ session, role }: EditRoleFormProps) {
     try {
       const [addedUsers, removedUsers] = identifyRoleChanges(role.users ? role.users.map((user: any) => user.id) : [], selectedUsers.map((user) => user.value));
       const [addedGroups, removedGroups] = identifyRoleChanges(role.groups ? role.groups.map((group: any) => group.id) : [], selectedGroups.map((group) => group.value));
-      await editRole(role.id, addedUsers, removedUsers, addedGroups, removedGroups, session)
+      const permissions: PermissionEntity[] = []
+      selectedResourceActions.forEach((value, key) => {
+        const resName = resources.find(r => r.id == key)?.identifier
+        if (resName) {
+          value.forEach(action => {
+            permissions.push({
+              resource : resName,
+              action : action.identifier
+            })
+          })
+        }
+    });
+      const [addedPermissions, removedPermissions] = identifyPermissionChanges(role.permissions ? role.permissions : [], permissions)
+      await editRole(role.id, addedUsers, removedUsers, addedGroups, removedGroups, addedPermissions, removedPermissions, session)
       toast({
         title: "Role Updated Successfully",
         description: 'The role has been updated successfully.',
@@ -418,10 +442,10 @@ export function EditRoleForm({ session, role }: EditRoleFormProps) {
                           <MultiSelect items={users.map((user: any) => ({
                             value: user.id,
                             label: user.identifier
-                          }))} onSelect={handleSelectUsers} selectedItems={role.users!.map((user: UserEntity) => ({
+                          }))} onSelect={handleSelectUsers} selectedItems={role.users ? role.users!.map((user: UserEntity) => ({
                             value: user.id,
                             label: user.identifier
-                          }))} />
+                          })): []} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -439,10 +463,10 @@ export function EditRoleForm({ session, role }: EditRoleFormProps) {
                           <MultiSelect items={groups.map((role: any) => ({
                             value: role.id,
                             label: role.identifier
-                          }))} onSelect={handleSelectGroups} selectedItems={role.groups!.map((group: GroupEntity) => ({
+                          }))} onSelect={handleSelectGroups} selectedItems={role.groups ? role.groups!.map((group: GroupEntity) => ({
                             value: group.id,
                             label: group.identifier
-                          }))} />
+                          })): []} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -532,7 +556,7 @@ export function EditRoleForm({ session, role }: EditRoleFormProps) {
               </Tabs>
             </div>
             <div className="flex justify-end">
-              <Button type="submit" size="sm">Create</Button>
+              <Button type="submit" size="sm">Update</Button>
             </div>
           </div>
         </form>
