@@ -36,15 +36,14 @@ function ActionSelector({ resourceId, selectedResourceActions } : ActionSelector
     const { toast } = useToast()
     const [resource, setResorce] = useState<Resource>()
     const [selectedActions, setSelectedActions] = useState<MultiSelectItem[]>(selectedResourceActions.get(resourceId)?.map(action => ({
-        value: action.id,
+        value: action.identifier,
         label: action.identifier
       })) ?? []);
 
     useEffect(() => {
         const actions = selectedActions
-        .map(action => resource?.actions?.find(a => a.id === action.value))
+        .map(action => resource?.actions?.find(a => a.identifier === action.value))
         .filter(action => action !== undefined) as ActionEntity[];
-        console.log(selectedActions)
         selectedResourceActions.set(resourceId, actions);
     }, [selectedActions, resourceId, resource?.actions]);
 
@@ -68,7 +67,7 @@ function ActionSelector({ resourceId, selectedResourceActions } : ActionSelector
   return (
     resource?.actions ? 
     <MultiSelect items={resource?.actions?.map((action: any) => ({
-        value: action.id,
+        value: action.identifier,
         label: action.identifier
       }))} onSelect={handleSelectActions} selectedItems={selectedActions} />
       : <div></div>

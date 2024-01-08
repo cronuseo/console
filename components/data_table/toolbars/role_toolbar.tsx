@@ -14,7 +14,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { MultiSelect, MultiSelectItem } from "@/components/ui/multi-select"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import React from "react"
@@ -22,19 +22,14 @@ import { Check, ChevronsUpDown } from "lucide-react"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
 import { cn } from "@/lib/utils"
 import { Session } from "next-auth"
-import { ActionEntity, GroupEntity, ResourceEntity, UserEntity } from "@/types"
+import { ActionEntity, GroupEntity, PermissionEntity, ResourceEntity, UserEntity } from "@/types"
 import ActionSelector from "@/components/action-selector"
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
 }
 
-interface Permission {
-  resource: string;
-  action: string;
-}
-
-const addRoles = async (identifier: string, display_name: string, users: string[], groups: string[], permissions: Permission[], session: Session) => {
+const addRoles = async (identifier: string, display_name: string, users: string[], groups: string[], permissions: PermissionEntity[], session: Session) => {
 
   const body = {
     identifier: identifier,
@@ -201,7 +196,7 @@ export function AddRoleForm({ session }: any) {
         console.error('Failed to fetch group:', error);
       }
     };
-    const loadActions = async () => {
+    const loadResources = async () => {
       try {
         const fetchedResources = await fetchResources(session);
         setResources(fetchedResources);
@@ -213,7 +208,7 @@ export function AddRoleForm({ session }: any) {
     if (session) {
       loadUsers();
       loadGroups();
-      loadActions();
+      loadResources();
     }
   }, [session]);
 
@@ -240,7 +235,7 @@ export function AddRoleForm({ session }: any) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      let permissions: Permission[] = [];
+      let permissions: PermissionEntity[] = [];
       resources.forEach(resource => {
         const actionEntities = selectedResourceActions.get(resource.id);
         actionEntities?.forEach(action => {
@@ -426,7 +421,7 @@ export function AddRoleForm({ session }: any) {
               </Tabs>
             </div>
             <div className="flex justify-end">
-              <Button type="submit">Create</Button>
+              <Button type="submit" size="sm">Create</Button>
             </div>
           </div>
         </form>
