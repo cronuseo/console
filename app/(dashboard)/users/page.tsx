@@ -5,14 +5,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PersonIcon, PlusIcon } from '@radix-ui/react-icons'
-import { getServerSession } from 'next-auth'
+import { Session, getServerSession } from 'next-auth'
 import { user_columns } from './user_columns'
 import { User } from '@/types'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { AddUserForm } from '@/components/data_table/toolbars/user_toolbar'
 
 
 
-const fetchUsers = async () : Promise<User[]> => {
-  const session = await getServerSession(options);
+const fetchUsers = async (session:Session): Promise<User[]> => {
   const response = await fetch(`${process.env.CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/users`, {
     method: 'GET',
     headers: {
@@ -30,7 +31,8 @@ const fetchUsers = async () : Promise<User[]> => {
 };
 
 export default async function Users() {
-  const users = await fetchUsers()
+  const session = await getServerSession(options);
+  const users = await fetchUsers(session)
   return (
     <div className='flex-1 flex-col mb-10'>
       <div className='flex flex-none h-20 justify-between items-center px-10'>
@@ -38,7 +40,7 @@ export default async function Users() {
       </div>
       <div className='flex flex-1 h-full ml-10 mr-10 mb-20'>
         {users.length > 0 ?
-          <div  className="flex-1">
+          <div className="flex-1">
             <DataTable data={users} columns={user_columns} />
           </div>
           :
@@ -48,27 +50,19 @@ export default async function Users() {
               <p className="mb-4 mt-2 text-sm text-muted-foreground">
                 There are no Users available at the moment.
               </p>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="relative">
-                    Add User
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button size="sm" className="relative" variant="outline">
+                    Create User
                   </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add Podcast</DialogTitle>
-                    <DialogDescription>
-                      Copy and paste the podcast feed URL to import.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="url">Podcast URL</Label>
-                      <Input id="url" placeholder="https://example.com/feed.xml" />
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                </SheetTrigger>
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>New User</SheetTitle>
+                  </SheetHeader>
+                  <AddUserForm session={session} />
+                </SheetContent>
+              </Sheet>
             </div>
           </div>}
       </div>
