@@ -53,7 +53,7 @@ export interface ResourceEntity {
 }
 
 export interface ActionEntity {
-    id: string;
+    id?: string;
     identifier: string;
     display_name: string;
 }
