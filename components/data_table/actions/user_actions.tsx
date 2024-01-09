@@ -151,9 +151,6 @@ export function UserActions<TData>({
             <SheetContent>
               <SheetHeader>
                 <SheetTitle>Edit User</SheetTitle>
-                <SheetDescription>
-                  Follow the steps to edit the user.
-                </SheetDescription>
               </SheetHeader>
               <EditUserForm session={session!} user={user!} />
             </SheetContent>

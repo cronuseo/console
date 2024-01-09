@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { usePathname } from "next/navigation"
 import { UserTableToolbar } from "./toolbars/user_toolbar"
 import { RoleTableToolbar } from "./toolbars/role_toolbar"
+import { ResourceTableToolbar } from "./toolbars/resource_toolbar"
 
 
 interface DataTableToolbarProps<TData> {
@@ -20,19 +21,23 @@ export function DataTableToolbar<TData>({
 }: DataTableToolbarProps<TData>) {
 
   const pathname = usePathname()
-  switch(pathname) {
+  switch (pathname) {
     case '/users':
       return (
-        <UserTableToolbar table={table}/>
+        <UserTableToolbar table={table} />
       )
     case '/roles':
       return (
-        <RoleTableToolbar table={table}/>
+        <RoleTableToolbar table={table} />
       )
-    default :
-        return (
-          <div></div>
-        )
+    case '/resources':
+      return (
+        <ResourceTableToolbar table={table} />
+      )
+    default:
+      return (
+        <div></div>
+      )
   }
 
 }

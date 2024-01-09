@@ -1,23 +1,22 @@
 "use client"
 
-import { Cross2Icon, PlusIcon } from "@radix-ui/react-icons"
+import { Cross2Icon } from "@radix-ui/react-icons"
 import { Table } from "@tanstack/react-table"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Label } from "@/components/ui/label"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import * as z from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useSession } from "next-auth/react"
 import { useToast } from "@/components/ui/use-toast"
-import { MultiSelect, MultiSelectItem } from "@/components/ui/multi-select"
-import { useEffect, useState } from "react"
+import { MultiSelectItem } from "@/components/ui/multi-select"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { ActionEntity } from "@/types"
+import { MultiInput } from "@/components/ui/multi-input"
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
@@ -66,9 +65,9 @@ export function ResourceTableToolbar<TData>({
       <div className="flex flex-1 items-center space-x-2">
         <Input
           placeholder="Search"
-          value={(table.getColumn("username")?.getFilterValue() as string) ?? ""}
+          value={(table.getColumn("display_name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("username")?.setFilterValue(event.target.value)
+            table.getColumn("display_name")?.setFilterValue(event.target.value)
           }
           className="h-8 w-[150px] lg:w-[250px]"
         />
@@ -118,35 +117,31 @@ export function AddResourceForm({ session }: any) {
 
 
   const [actions, setActions] = useState<MultiSelectItem[]>([]);
-
-
-  const [selectedGroups, setSelectedGroups] = useState<MultiSelectItem[]>([]);
-
-  const handleSelectGroups = (items: MultiSelectItem[]) => {
-    setSelectedGroups(items);
+  const handleSelectActions = (items: MultiSelectItem[]) => {
+    setActions(items);
   };
-
   const { toast } = useToast()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-        display_name: "",
+      display_name: "",
       identifier: ""
     },
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-    //   await addUsers(values.identifier, values.username, selectedRoles.map((role) => role.value ), selectedGroups.map((group) => group.value ), session)
+        
+    await addResource(values.identifier, values.display_name, actions.map((action) => ({ identifier: action.value, display_name: action.value })), session)
       toast({
-        title: "User Added Successfully",
-        description: 'The user has been added successfully.',
+        title: "Resource Added Successfully",
+        description: 'The resource has been added successfully.',
       })
       router.refresh()
     } catch (error) {
       toast({
-        title: "User Addition Failed",
-        description: error instanceof Error ? error.message : 'Error while adding the user',
+        title: "Resource Addition Failed",
+        description: error instanceof Error ? error.message : 'Error while adding the resource',
       })
     }
 
@@ -173,9 +168,22 @@ export function AddResourceForm({ session }: any) {
           name="display_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Username</FormLabel>
+              <FormLabel>Display Name</FormLabel>
               <FormControl>
-                <Input placeholder="username" {...field} />
+                <Input placeholder="display_name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="actions"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Actions</FormLabel>
+              <FormControl>
+                <MultiInput onSelect={handleSelectActions} selectedItems={[]}/>
               </FormControl>
               <FormMessage />
             </FormItem>

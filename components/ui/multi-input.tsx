@@ -8,12 +8,11 @@ import { MultiSelectItem } from "./multi-select";
 
 
 interface MultiSelectProps {
-  items: MultiSelectItem[];
   selectedItems: MultiSelectItem[]; 
   onSelect: (selectedItems: MultiSelectItem[]) => void;
 }
 
-export function MultiInput({ items, selectedItems, onSelect }: MultiSelectProps) {
+export function MultiInput({ selectedItems, onSelect }: MultiSelectProps) {
 
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = React.useState(false);
