@@ -10,6 +10,7 @@ import { user_columns } from './user_columns'
 import { User } from '@/types'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { AddUserForm } from '@/components/data_table/toolbars/user_toolbar'
+import { redirect } from 'next/navigation'
 
 
 
@@ -23,6 +24,9 @@ const fetchUsers = async (session:Session): Promise<User[]> => {
   });
 
   if (!response.ok) {
+    if (response.status == 401) {
+      redirect("/signin")
+    }
     throw new Error('Network response was not ok');
   }
 
@@ -31,7 +35,11 @@ const fetchUsers = async (session:Session): Promise<User[]> => {
 };
 
 export default async function Users() {
+
   const session = await getServerSession(options);
+  if (!session) {
+    redirect("/signin")
+  }
   const users = await fetchUsers(session)
   return (
     <div className='flex-1 flex-col mb-10'>

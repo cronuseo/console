@@ -1,18 +1,19 @@
 import { options } from '@/app/api/auth/[...nextauth]/options'
 import { DataTable } from '@/components/data_table/data_table'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { PersonIcon, PlusIcon } from '@radix-ui/react-icons'
-import { getServerSession } from 'next-auth'
+import { PersonIcon } from '@radix-ui/react-icons'
+import { Session, getServerSession } from 'next-auth'
 import { role_columns } from './resource_columns'
 import { ResourceEntity } from '@/types'
+import { redirect } from 'next/navigation'
 
 
 
-const fetchResources = async () : Promise<ResourceEntity[]> => {
-  const session = await getServerSession(options);
+const fetchResources = async (session: Session) : Promise<ResourceEntity[]> => {
+  
   const response = await fetch(`${process.env.CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/resources`, {
     method: 'GET',
     headers: {
@@ -22,6 +23,9 @@ const fetchResources = async () : Promise<ResourceEntity[]> => {
   });
 
   if (!response.ok) {
+    if (response.status == 401) {
+      redirect("/signin")
+    }
     throw new Error('Network response was not ok');
   }
 
@@ -30,7 +34,12 @@ const fetchResources = async () : Promise<ResourceEntity[]> => {
 };
 
 export default async function Resources() {
-  const resources = await fetchResources()
+
+  const session = await getServerSession(options);
+  if (!session) {
+    redirect("/signin")
+  }
+  const resources = await fetchResources(session)
   return (
     <div className='flex-1 flex-col mb-10'>
       <div className='flex flex-none h-20 justify-between items-center px-10'>

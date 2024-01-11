@@ -1,15 +1,13 @@
 import { options } from '@/app/api/auth/[...nextauth]/options'
 import { DataTable } from '@/components/data_table/data_table'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { PersonIcon, PlusIcon } from '@radix-ui/react-icons'
+import { PersonIcon } from '@radix-ui/react-icons'
 import { Session, getServerSession } from 'next-auth'
 import { role_columns } from './roles_columns'
 import { RoleEntity } from '@/types'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { AddRoleForm } from '@/components/data_table/toolbars/role_toolbar'
+import { redirect } from 'next/navigation'
 
 
 
@@ -24,6 +22,9 @@ const fetchRoles = async (session: Session): Promise<RoleEntity[]> => {
   });
 
   if (!response.ok) {
+    if (response.status == 401) {
+      redirect("/signin")
+    }
     throw new Error('Network response was not ok');
   }
 
@@ -32,7 +33,11 @@ const fetchRoles = async (session: Session): Promise<RoleEntity[]> => {
 };
 
 export default async function Roles() {
+
   const session = await getServerSession(options);
+  if (!session) {
+    redirect("/signin")
+  }
   const roles = await fetchRoles(session)
   return (
     <div className='flex-1 flex-col mb-10'>
