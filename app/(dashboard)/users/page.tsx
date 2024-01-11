@@ -1,12 +1,9 @@
 import { options } from '@/app/api/auth/[...nextauth]/options'
 import { DataTable } from '@/components/data_table/data_table'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { PersonIcon, PlusIcon } from '@radix-ui/react-icons'
+import { PersonIcon } from '@radix-ui/react-icons'
 import { Session, getServerSession } from 'next-auth'
-import { user_columns } from './user_columns'
+import { user_columns } from '../../../components/data_table/columns/user_columns'
 import { User } from '@/types'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { AddUserForm } from '@/components/data_table/toolbars/user_toolbar'
@@ -15,7 +12,7 @@ import { redirect } from 'next/navigation'
 
 
 const fetchUsers = async (session:Session): Promise<User[]> => {
-  const response = await fetch(`${process.env.CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/users`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/users`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',

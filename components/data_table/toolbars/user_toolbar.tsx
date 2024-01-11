@@ -30,7 +30,7 @@ const addUsers = async (identifier: string, username: string, roles: string[], g
   };
 
   const response = await fetch(
-    `http://localhost:8080/api/v1/o/${session!.user.organization_id}/users`,
+    `${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session!.user.organization_id}/users`,
     {
       method: "POST",
       headers: {
@@ -56,7 +56,7 @@ const addUsers = async (identifier: string, username: string, roles: string[], g
 
 const fetchRoles = async (session: any) => {
 
-  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/roles`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/roles`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
@@ -74,7 +74,7 @@ const fetchRoles = async (session: any) => {
 
 const fetchGroups = async (session: any) => {
 
-  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/groups`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/groups`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',

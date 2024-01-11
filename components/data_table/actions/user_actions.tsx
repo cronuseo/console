@@ -26,7 +26,7 @@ interface DataTableRowActionsProps<TData> {
 
 const deleteUser = async (id: string, session: Session) => {
 
-  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/users/${id}`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/users/${id}`, {
     method: 'DELETE',
     headers: {
       'Accept': 'application/json',
@@ -41,7 +41,7 @@ const deleteUser = async (id: string, session: Session) => {
 
 const fetchUser = async (id: string, session: Session) : Promise<User> => {
 
-  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/users/${id}`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/users/${id}`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
@@ -59,7 +59,7 @@ const fetchUser = async (id: string, session: Session) : Promise<User> => {
 
 const fetchRoles = async (session: Session) : Promise<RoleEntity[]> => {
 
-  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/roles`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/roles`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
@@ -77,7 +77,7 @@ const fetchRoles = async (session: Session) : Promise<RoleEntity[]> => {
 
 const fetchGroups = async (session: Session) : Promise<GroupEntity[]> => {
 
-  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/groups`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/groups`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
@@ -207,7 +207,7 @@ const editUser = async (id: string, added_roles: string[], removed_roles: string
   };
 
   const response = await fetch(
-    `http://localhost:8080/api/v1/o/${session!.user.organization_id}/users/${id}`,
+    `${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session!.user.organization_id}/users/${id}`,
     {
       method: "PATCH",
       headers: {

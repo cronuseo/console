@@ -31,7 +31,7 @@ const addResource = async (identifier: string, display_name: string, actions: Ac
   };
 
   const response = await fetch(
-    `http://localhost:8080/api/v1/o/${session!.user.organization_id}/resources`,
+    `${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session!.user.organization_id}/resources`,
     {
       method: "POST",
       headers: {

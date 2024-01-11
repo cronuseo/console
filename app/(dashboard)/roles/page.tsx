@@ -3,7 +3,7 @@ import { DataTable } from '@/components/data_table/data_table'
 import { Button } from '@/components/ui/button'
 import { PersonIcon } from '@radix-ui/react-icons'
 import { Session, getServerSession } from 'next-auth'
-import { role_columns } from './roles_columns'
+import { role_columns } from '../../../components/data_table/columns/roles_columns'
 import { RoleEntity } from '@/types'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { AddRoleForm } from '@/components/data_table/toolbars/role_toolbar'
@@ -13,7 +13,7 @@ import { redirect } from 'next/navigation'
 
 const fetchRoles = async (session: Session): Promise<RoleEntity[]> => {
 
-  const response = await fetch(`${process.env.CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/roles`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/roles`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',

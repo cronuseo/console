@@ -39,7 +39,7 @@ const addRoles = async (identifier: string, display_name: string, users: string[
   };
 
   const response = await fetch(
-    `http://localhost:8080/api/v1/o/${session!.user.organization_id}/roles`,
+    `${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session!.user.organization_id}/roles`,
     {
       method: "POST",
       headers: {
@@ -65,7 +65,7 @@ const addRoles = async (identifier: string, display_name: string, users: string[
 
 const fetchUsers = async (session: Session): Promise<UserEntity[]> => {
 
-  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/users`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/users`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
@@ -83,7 +83,7 @@ const fetchUsers = async (session: Session): Promise<UserEntity[]> => {
 
 const fetchGroups = async (session: Session): Promise<GroupEntity[]> => {
 
-  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/groups`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/groups`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
@@ -101,7 +101,7 @@ const fetchGroups = async (session: Session): Promise<GroupEntity[]> => {
 
 const fetchResources = async (session: Session): Promise<ResourceEntity[]> => {
 
-  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/resources`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/resources`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',

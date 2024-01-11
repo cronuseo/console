@@ -9,7 +9,7 @@ import { useSession } from "next-auth/react"
 import { useToast } from "@/components/ui/use-toast"
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, Form } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { MultiSelectItem, MultiSelect } from "@/components/ui/multi-select"
+import { MultiSelectItem } from "@/components/ui/multi-select"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
@@ -27,7 +27,7 @@ interface DataTableRowActionsProps<TData> {
 
 const deleteResource = async (id: string, session: Session) => {
 
-  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/resources/${id}`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/resources/${id}`, {
     method: 'DELETE',
     headers: {
       'Accept': 'application/json',
@@ -42,7 +42,7 @@ const deleteResource = async (id: string, session: Session) => {
 
 const fetchResource = async (id: string, session: Session) : Promise<Resource> => {
 
-  const response = await fetch(`http://localhost:8080/api/v1/o/${session.user.organization_id}/resources/${id}`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/resources/${id}`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
@@ -170,7 +170,7 @@ const editResource = async (id: string, added_actions: ActionEntity[], removed_a
   };
 
   const response = await fetch(
-    `http://localhost:8080/api/v1/o/${session!.user.organization_id}/resources/${id}`,
+    `${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session!.user.organization_id}/resources/${id}`,
     {
       method: "PATCH",
       headers: {

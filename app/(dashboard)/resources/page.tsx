@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PersonIcon } from '@radix-ui/react-icons'
 import { Session, getServerSession } from 'next-auth'
-import { role_columns } from './resource_columns'
+import { role_columns } from '../../../components/data_table/columns/resource_columns'
 import { ResourceEntity } from '@/types'
 import { redirect } from 'next/navigation'
 
@@ -14,7 +14,7 @@ import { redirect } from 'next/navigation'
 
 const fetchResources = async (session: Session) : Promise<ResourceEntity[]> => {
   
-  const response = await fetch(`${process.env.CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/resources`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/${session.user.organization_id}/resources`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
