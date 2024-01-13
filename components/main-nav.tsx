@@ -1,14 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { usePathname } from "next/navigation"
 
 import UserNav from "./user-nav"
 import { ModeToggle } from "./mode-toggle"
 import Logo from "./logo"
 
 const MainNav = () => {
-  const pathname = usePathname()
 
   return (
     <div className="flex flex-row justify-between items-center pr-4 py-4 border-b">

@@ -22,7 +22,7 @@ export const options = {
 
       try {
         const response = await fetch(
-          "http://localhost:8080/api/v1/o/super/users/sync",
+          `${process.env.NEXT_PUBLIC_API_URL_CRONUSEO_MGT_API_BASE!}/api/v1/o/super/users/sync`,
           {
             method: "POST",
             headers: {
